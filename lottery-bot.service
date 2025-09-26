@@ -1,0 +1,29 @@
+[Unit]
+Description=Telegram Lottery Bot
+After=network.target
+
+[Service]
+Type=simple
+User=lottery
+Group=lottery
+WorkingDirectory=/opt/lottery-bot
+ExecStart=/opt/lottery-bot/venv/bin/python main.py
+Restart=always
+RestartSec=10
+
+# Environment
+Environment=PYTHONPATH=/opt/lottery-bot
+EnvironmentFile=/opt/lottery-bot/.env
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/lottery-bot/logs /opt/lottery-bot/uploads /opt/lottery-bot/exports /opt/lottery-bot/data
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,38 @@
+# Core dependencies
+aiogram==3.2.0
+duckdb==0.9.2
+python-dotenv==1.0.0
+
+# Web admin panel
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Data processing and export
+pandas==2.1.4
+openpyxl==3.1.2
+XlsxWriter==3.1.9
+
+# Image processing
+Pillow==10.1.0
+
+# Async file operations
+aiofiles==23.2.1
+
+# HTTP requests (for future API integrations)
+aiohttp==3.9.1
+requests==2.31.0
+
+# Cryptography for secure random generation
+cryptography==41.0.8
+
+# Date and time utilities
+python-dateutil==2.8.2
+
+# Development and testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+flake8==6.1.0
+
+# Optional: For production deployment
+gunicorn==21.2.0
