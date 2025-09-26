@@ -276,6 +276,26 @@ def create_registration_router(db_manager: DatabaseManager) -> Router:
             reply_markup=get_photo_upload_keyboard()
         )
     
+    @router.message(F.text.in_(["📷 Сделать фото", "🖼️ Выбрать из галереи"]), StateFilter(RegistrationStates.WAITING_LEAFLET_PHOTO))
+    async def photo_instruction(message: Message):
+        """Provide instructions for photo upload"""
+        await message.answer(
+            "📷 Для загрузки фото:\n\n"
+            "📷 Сделать фото:\n"
+            "• Нажмите на скрепку (📎) в поле ввода\n"
+            "• Выберите 'Камера'\n"
+            "• Сфотографируйте лифлет\n\n"
+            "🖼️ Выбрать из галереи:\n"
+            "• Нажмите на скрепку (📎) в поле ввода\n"
+            "• Выберите 'Галерея'\n"
+            "• Найдите и выберите фото лифлета\n\n"
+            "❗️ Требования к фото:\n"
+            "• Формат: JPG, PNG, GIF\n"
+            "• Размер: до 10 МБ\n"
+            "• Четкое изображение лифлета",
+            reply_markup=get_photo_upload_keyboard()
+        )
+    
     @router.message(F.photo, StateFilter(RegistrationStates.WAITING_LEAFLET_PHOTO))
     async def process_photo(message: Message, state: FSMContext):
         """Process leaflet photo"""
@@ -396,6 +416,52 @@ def create_registration_router(db_manager: DatabaseManager) -> Router:
         await callback.message.answer(
             "Введите ваше полное имя:",
             reply_markup=get_name_input_keyboard()
+        )
+    
+    @router.callback_query(F.data == "edit_phone", StateFilter(RegistrationStates.CONFIRMATION))
+    async def edit_phone(callback: CallbackQuery, state: FSMContext):
+        """Edit phone number"""
+        await state.set_state(RegistrationStates.WAITING_PHONE)
+        await callback.message.edit_text(
+            "📞 Введите новый номер телефона:",
+            reply_markup=None
+        )
+        await callback.message.answer(
+            "📞 Шаг 2 из 4: Укажите номер телефона\n\n"
+            "Вы можете:\n"
+            "• Нажать кнопку '📞 Отправить мой номер' для автоматической отправки\n"
+            "• Или ввести номер вручную в формате +7XXXXXXXXXX",
+            reply_markup=get_phone_input_keyboard()
+        )
+    
+    @router.callback_query(F.data == "edit_card", StateFilter(RegistrationStates.CONFIRMATION))
+    async def edit_card(callback: CallbackQuery, state: FSMContext):
+        """Edit loyalty card"""
+        await state.set_state(RegistrationStates.WAITING_LOYALTY_CARD)
+        await callback.message.edit_text(
+            "💳 Введите новый номер карты лояльности:",
+            reply_markup=None
+        )
+        await callback.message.answer(
+            "💳 Шаг 3 из 4: Введите номер карты лояльности\n\n"
+            "Укажите номер вашей карты лояльности (8-16 цифр).\n"
+            "Карту можно найти в мобильном приложении или на физической карте.",
+            reply_markup=get_loyalty_card_keyboard()
+        )
+    
+    @router.callback_query(F.data == "edit_photo", StateFilter(RegistrationStates.CONFIRMATION))
+    async def edit_photo(callback: CallbackQuery, state: FSMContext):
+        """Edit leaflet photo"""
+        await state.set_state(RegistrationStates.WAITING_LEAFLET_PHOTO)
+        await callback.message.edit_text(
+            "📷 Загрузите новое фото лифлета:",
+            reply_markup=None
+        )
+        await callback.message.answer(
+            "📷 Шаг 4 из 4: Загрузите фото лифлета\n\n"
+            "Сфотографируйте или выберите из галереи фото рекламного лифлета.\n\n"
+            "❓ Лифлет - это рекламная листовка о товарах и акциях.",
+            reply_markup=get_photo_upload_keyboard()
         )
     
     @router.callback_query(F.data == "cancel_registration", StateFilter(RegistrationStates.CONFIRMATION))
