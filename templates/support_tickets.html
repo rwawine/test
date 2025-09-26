@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Техническая поддержка - Админ-панель{% endblock %}
+
+{% block content %}
+<div class="bg-gray-800 text-white p-4 rounded-lg shadow-md mb-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            Техническая поддержка
+        </h1>
+        <div class="flex space-x-2">
+            <a href="{{ url_for('support_tickets', status='open') }}" class="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-200 flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                Открытые
+            </a>
+            <a href="{{ url_for('support_tickets', status='in_progress') }}" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-200 flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                В работе
+            </a>
+            <a href="{{ url_for('support_tickets', status='closed') }}" class="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition duration-200 flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Закрытые
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    {% set open_count = tickets|selectattr("status", "equalto", "open")|list|length %}
+    {% set in_progress_count = tickets|selectattr("status", "equalto", "in_progress")|list|length %}
+    {% set closed_count = tickets|selectattr("status", "equalto", "closed")|list|length %}
+
+    <div class="bg-gray-800 p-4 rounded-lg shadow-md flex items-center justify-between border-l-4 border-yellow-500">
+        <div>
+            <div class="text-sm font-bold text-yellow-500 uppercase">Открытые обращения</div>
+            <div class="text-2xl font-bold text-white">{{ open_count }}</div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+    </div>
+    <div class="bg-gray-800 p-4 rounded-lg shadow-md flex items-center justify-between border-l-4 border-blue-500">
+        <div>
+            <div class="text-sm font-bold text-blue-500 uppercase">В работе</div>
+            <div class="text-2xl font-bold text-white">{{ in_progress_count }}</div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+    </div>
+    <div class="bg-gray-800 p-4 rounded-lg shadow-md flex items-center justify-between border-l-4 border-green-500">
+        <div>
+            <div class="text-sm font-bold text-green-500 uppercase">Закрытые</div>
+            <div class="text-2xl font-bold text-white">{{ closed_count }}</div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    </div>
+    <div class="bg-gray-800 p-4 rounded-lg shadow-md flex items-center justify-between border-l-4 border-gray-500">
+        <div>
+            <div class="text-sm font-bold text-gray-500 uppercase">Всего обращений</div>
+            <div class="text-2xl font-bold text-white">{{ tickets|length }}</div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+    </div>
+</div>
+
+<!-- Support Tickets Table -->
+<div class="bg-gray-800 rounded-lg shadow-md">
+    <div class="p-4 border-b border-gray-700">
+        <h6 class="font-bold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+            Обращения в техподдержку
+            {% if current_status %}
+                - <span class="ml-2 px-2 py-1 text-xs rounded-full 
+                {% if current_status == 'open' %}bg-yellow-500 text-white{% endif %}
+                {% if current_status == 'in_progress' %}bg-blue-500 text-white{% endif %}
+                {% if current_status == 'closed' %}bg-green-500 text-white{% endif %}
+                ">{{ {'open': 'Открытые', 'in_progress': 'В работе', 'closed': 'Закрытые'}[current_status] }}</span>
+            {% endif %}
+        </h6>
+    </div>
+    <div class="p-4">
+        {% if tickets %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-gray-800 text-white" id="ticketsTable">
+                <thead class="bg-gray-900">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">№ Тикета</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Участник</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Категория</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Тема</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Статус</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Создан</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Активность</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Действия</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for ticket in tickets %}
+                    <tr class="hover:bg-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap font-bold">{{ ticket.ticket_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div>
+                                <div class="font-semibold">{{ ticket.participant_name or 'Неизвестно' }}</div>
+                                {% if ticket.telegram_username %}
+                                    <div class="text-sm text-gray-400">@{{ ticket.telegram_username }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-600 text-gray-200">
+                                {% if ticket.category == 'photo_problem' %}📷 Проблемы с фото
+                                {% elif ticket.category == 'loyalty_card' %}💳 Карта лояльности
+                                {% elif ticket.category == 'technical' %}🔧 Технические
+                                {% elif ticket.category == 'status' %}📋 Статус заявки
+                                {% elif ticket.category == 'lottery' %}🎲 Розыгрыш
+                                {% else %}❓ Другое
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-300 truncate" style="max-width: 200px;" title="{{ ticket.subject }}">{{ ticket.subject }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if ticket.status == 'open' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-500 text-white">Открыт</span>
+                            {% elif ticket.status == 'in_progress' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-500 text-white">В работе</span>
+                            {% elif ticket.status == 'closed' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-500 text-white">Закрыт</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {% if ticket.created_at %}
+                                {{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            {% else %}N/A{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {% if ticket.updated_at %}
+                                {{ ticket.updated_at.strftime('%d.%m.%Y %H:%M') }}
+                            {% else %}N/A{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ url_for('support_ticket_detail', ticket_id=ticket.id) }}" class="text-blue-400 hover:text-blue-600" title="Открыть тикет">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                                </a>
+                                {% if ticket.status != 'closed' %}
+                                    <form method="POST" action="{{ url_for('close_ticket', ticket_id=ticket.id) }}" onsubmit="return confirm('Закрыть тикет {{ ticket.ticket_number }}?')">
+                                        <button type="submit" class="text-green-400 hover:text-green-600" title="Закрыть тикет">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-16">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <h5 class="mt-4 text-xl font-semibold text-white">Нет обращений</h5>
+            <p class="mt-2 text-gray-400">
+                {% if current_status %}
+                    Нет обращений с выбранным статусом.
+                {% else %}
+                    Пока нет обращений в техподдержку.
+                {% endif %}
+            </p>
+            {% if current_status %}
+                <a href="{{ url_for('support_tickets') }}" class="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    Показать все обращения
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<style>
+    /* Custom styles for DataTables */
+    .dataTables_wrapper {
+        color: #cbd5e0; /* text-gray-400 */
+    }
+    .dataTables_length select, .dataTables_filter input {
+        background-color: #2d3748; /* bg-gray-800 */
+        border: 1px solid #4a5568; /* border-gray-600 */
+        color: white;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+    }
+    .dataTables_length label, .dataTables_filter label {
+        color: #a0aec0; /* text-gray-500 */
+    }
+    .dataTables_info {
+        color: #a0aec0; /* text-gray-500 */
+    }
+    .dataTables_paginate .paginate_button {
+        color: #a0aec0 !important; /* text-gray-500 */
+        border: 1px solid transparent;
+        margin: 0 2px;
+        border-radius: 0.375rem;
+    }
+    .dataTables_paginate .paginate_button:hover {
+        background: #4a5568 !important; /* bg-gray-600 */
+        border: 1px solid #4a5568;
+    }
+    .dataTables_paginate .paginate_button.current {
+        background: #4299e1 !important; /* bg-blue-500 */
+        color: white !important;
+        border: 1px solid #4299e1;
+    }
+    .dataTables_paginate .paginate_button.disabled {
+        color: #718096 !important; /* text-gray-600 */
+    }
+    table.dataTable {
+        border-collapse: collapse !important;
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    $('#ticketsTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/ru.json"
+        },
+        "pageLength": 25,
+        "order": [[ 5, "desc" ]],
+        "columnDefs": [
+            { "orderable": false, "targets": [7] }
+        ],
+        "initComplete": function(settings, json) {
+            $('.dataTables_length select').addClass('focus:ring-blue-500 focus:border-blue-500');
+            $('.dataTables_filter input').addClass('focus:ring-blue-500 focus:border-blue-500');
+        }
+    });
+});
+</script>
+{% endblock %}

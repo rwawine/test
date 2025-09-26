@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Тикет {{ ticket.ticket_number }} - Техподдержка{% endblock %}
+
+{% block content %}
+<div class="bg-gray-800 text-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold flex items-center">
+        <a href="{{ url_for('support_tickets') }}" class="text-gray-400 hover:text-white mr-4" title="Назад к тикетам">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        </a>
+        Тикет #{{ ticket.ticket_number }}
+    </h1>
+    <div class="flex items-center">
+        <span class="px-3 py-1 text-sm font-semibold rounded-full 
+            {% if ticket.status == 'open' %}bg-blue-500 text-white
+            {% elif ticket.status == 'in_progress' %}bg-yellow-500 text-black
+            {% elif ticket.status == 'resolved' %}bg-green-500 text-white
+            {% elif ticket.status == 'closed' %}bg-gray-600 text-gray-200
+            {% endif %}">
+            {% if ticket.status == 'open' %}Открыт
+            {% elif ticket.status == 'in_progress' %}В работе
+            {% elif ticket.status == 'resolved' %}Решен
+            {% elif ticket.status == 'closed' %}Закрыт
+            {% endif %}
+        </span>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Messages -->
+        <div class="bg-gray-800 rounded-lg shadow-md">
+            <div class="p-4 border-b border-gray-700">
+                <h5 class="font-bold text-white flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    Переписка ({{ messages|length }} сообщений)
+                </h5>
+            </div>
+            <div class="p-4">
+                {% if messages %}
+                <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                    {% for message in messages %}
+                    <div class="flex items-start gap-3 {% if message.sender_type == 'admin' %}flex-row-reverse{% endif %}">
+                        <div class="{% if message.sender_type == 'admin' %}bg-blue-600{% else %}bg-gray-700{% endif %} rounded-lg p-3 max-w-lg">
+                            <p class="text-white">{{ message.message_text | replace('\n', '<br>') | safe }}</p>
+                            {% if message.attachment_path %}
+                            <div class="mt-2">
+                                <a href="{{ url_for('serve_photo', filename=message.attachment_path) }}" target="_blank" class="inline-flex items-center text-sm font-medium text-blue-300 hover:text-blue-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                                    Вложение
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-xs text-gray-400 pt-1 text-center">
+                            <div class="font-semibold {% if message.sender_type == 'admin' %}text-blue-400{% else %}text-gray-300{% endif %}">
+                                {% if message.sender_type == 'admin' %}Админ{% else %}{{ ticket.username or 'Пользователь' }}{% endif %}
+                            </div>
+                            <div>{{ message.sent_at.strftime('%H:%M') if message.sent_at else '' }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    <h5 class="mt-4 text-xl font-semibold text-white">Нет сообщений</h5>
+                    <p class="mt-2 text-gray-400">Пока нет сообщений в этом тикете.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Response Form -->
+        {% if ticket.status in ['open', 'in_progress'] %}
+        <div class="bg-gray-800 rounded-lg shadow-md" x-data="{ responseText: '' }">
+            <div class="p-4 border-b border-gray-700">
+                <h5 class="font-bold text-white flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6-6m-6 6l6 6" /></svg>
+                    Ответить пользователю
+                </h5>
+            </div>
+            <div class="p-4">
+                <form method="POST" action="{{ url_for('respond_to_ticket', ticket_id=ticket.id) }}">
+                    <div class="mb-4">
+                        <label for="response" class="sr-only">Ваш ответ</label>
+                        <textarea id="response" name="response" rows="5" x-model="responseText" class="w-full bg-gray-900 text-white border border-gray-700 rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Введите ваш ответ пользователю..." required></textarea>
+                        <p class="text-xs text-gray-400 mt-1">Ответ будет отправлен пользователю в Telegram.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="font-semibold text-white text-sm mb-2 block">Быстрые ответы:</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button type="button" @click="responseText = (responseText ? responseText + '\n\n' : '') + 'Спасибо за ваше обращение! Мы рассмотрели вашу проблему и готовы помочь.'" class="text-left w-full bg-gray-700 hover:bg-gray-600 text-white text-sm p-2 rounded-lg transition">
+                                🙏 Благодарность
+                            </button>
+                            <button type="button" @click="responseText = (responseText ? responseText + '\n\n' : '') + 'Для решения вашей проблемы нам потребуется дополнительная информация. Пожалуйста, предоставьте следующие данные:'" class="text-left w-full bg-gray-700 hover:bg-gray-600 text-white text-sm p-2 rounded-lg transition">
+                                🤔 Запрос информации
+                            </button>
+                            <button type="button" @click="responseText = (responseText ? responseText + '\n\n' : '') + 'Ваша проблема решена! Если у вас возникнут дополнительные вопросы, обращайтесь.'" class="text-left w-full bg-gray-700 hover:bg-gray-600 text-white text-sm p-2 rounded-lg transition">
+                                ✅ Проблема решена
+                            </button>
+                            <button type="button" @click="responseText = (responseText ? responseText + '\n\n' : '') + 'К сожалению, мы не можем решить вашу проблему в рамках данного обращения. Обратитесь к администратору.'" class="text-left w-full bg-gray-700 hover:bg-gray-600 text-white text-sm p-2 rounded-lg transition">
+                                🚨 Перенаправление
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                            Отправить ответ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Ticket Info -->
+        <div class="bg-gray-800 rounded-lg shadow-md">
+            <div class="p-4 border-b border-gray-700">
+                <h5 class="font-bold text-white flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Информация о тикете
+                </h5>
+            </div>
+            <div class="p-4 text-sm text-gray-300 space-y-2">
+                <p><strong>Тема:</strong> {{ ticket.subject }}</p>
+                <p><strong>Пользователь:</strong> {{ ticket.username or 'Неизвестно' }}</p>
+                {% if ticket.participant_name %}
+                <p><strong>Участник:</strong> {{ ticket.participant_name }}</p>
+                {% endif %}
+                <p><strong>Создан:</strong> {{ ticket.created_at.strftime('%d.%m.%Y %H:%M') if ticket.created_at else 'Неизвестно' }}</p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bg-gray-800 rounded-lg shadow-md">
+            <div class="p-4 border-b border-gray-700">
+                <h5 class="font-bold text-white flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    Действия
+                </h5>
+            </div>
+            <div class="p-4">
+                <div class="space-y-2">
+                    {% if ticket.status == 'open' %}
+                    <form method="POST" action="{{ url_for('update_ticket_status', ticket_id=ticket.id) }}">
+                        <input type="hidden" name="status" value="in_progress">
+                        <button type="submit" class="w-full px-4 py-2 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600 transition duration-200 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            Взять в работу
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if ticket.status in ['open', 'in_progress'] %}
+                    <form method="POST" action="{{ url_for('update_ticket_status', ticket_id=ticket.id) }}">
+                        <input type="hidden" name="status" value="resolved">
+                        <button type="submit" class="w-full px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition duration-200 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Отметить как решенный
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if ticket.status != 'closed' %}
+                    <form method="POST" action="{{ url_for('update_ticket_status', ticket_id=ticket.id) }}">
+                        <input type="hidden" name="status" value="closed">
+                        <button type="submit" class="w-full px-4 py-2 bg-gray-600 text-gray-200 font-semibold rounded-lg hover:bg-gray-700 transition duration-200 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            Закрыть тикет
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const conversation = document.querySelector('.overflow-y-auto');
+    if (conversation) {
+        conversation.scrollTop = conversation.scrollHeight;
+    }
+});
+</script>
+{% endblock %}

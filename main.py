@@ -9,7 +9,7 @@ from pathlib import Path
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import Config
-from bot.handlers import setup_handlers
+from handlers import setup_handlers
 from database.db_manager import DatabaseManager
 from web.app import create_app
 import threading

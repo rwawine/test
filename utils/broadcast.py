@@ -307,6 +307,93 @@ class BroadcastSystem:
         logger.info(f"Broadcast {broadcast_id} cancelled")
         return True
     
+    def update_broadcast(self, broadcast_id: str, title: str = None, 
+                        message_text: str = None, target_audience: str = None) -> bool:
+        """Update broadcast details (only for draft broadcasts)"""
+        conn = self.db_manager.connect()
+        
+        # Check if broadcast can be updated
+        broadcast = conn.execute("""
+            SELECT status FROM broadcasts WHERE id = ?
+        """, [broadcast_id]).fetchone()
+        
+        if not broadcast or broadcast[0] != 'draft':
+            return False
+        
+        # Build update query dynamically
+        updates = []
+        params = []
+        
+        if title is not None:
+            updates.append('title = ?')
+            params.append(title)
+        
+        if message_text is not None:
+            updates.append('message_text = ?')
+            params.append(message_text)
+        
+        if target_audience is not None:
+            updates.append('target_audience = ?')
+            params.append(target_audience)
+            
+            # Update recipients if target audience changed
+            recipients = self._get_target_recipients(target_audience)
+            total_recipients = len(recipients)
+            
+            # Delete old recipients
+            conn.execute("""
+                DELETE FROM broadcast_recipients WHERE broadcast_id = ?
+            """, [broadcast_id])
+            
+            # Insert new recipients
+            for participant in recipients:
+                import uuid
+                recipient_id = str(uuid.uuid4())
+                conn.execute("""
+                    INSERT INTO broadcast_recipients
+                    (id, broadcast_id, participant_id, telegram_id)
+                    VALUES (?, ?, ?, ?)
+                """, [recipient_id, broadcast_id, participant.get('id'), participant['telegram_id']])
+            
+            updates.append('total_recipients = ?')
+            params.append(total_recipients)
+        
+        if not updates:
+            return True  # Nothing to update
+        
+        # Execute update
+        params.append(broadcast_id)
+        query = f"UPDATE broadcasts SET {', '.join(updates)} WHERE id = ?"
+        conn.execute(query, params)
+        
+        logger.info(f"Broadcast {broadcast_id} updated")
+        return True
+    
+    def delete_broadcast(self, broadcast_id: str) -> bool:
+        """Delete broadcast (only draft or completed broadcasts)"""
+        conn = self.db_manager.connect()
+        
+        # Check if broadcast can be deleted
+        broadcast = conn.execute("""
+            SELECT status FROM broadcasts WHERE id = ?
+        """, [broadcast_id]).fetchone()
+        
+        if not broadcast or broadcast[0] == 'sending':
+            return False  # Can't delete broadcasts being sent
+        
+        # Delete recipients first (foreign key constraint)
+        conn.execute("""
+            DELETE FROM broadcast_recipients WHERE broadcast_id = ?
+        """, [broadcast_id])
+        
+        # Delete broadcast
+        conn.execute("""
+            DELETE FROM broadcasts WHERE id = ?
+        """, [broadcast_id])
+        
+        logger.info(f"Broadcast {broadcast_id} deleted")
+        return True
+    
     def get_broadcast_templates(self) -> Dict[str, str]:
         """Get common broadcast message templates"""
         templates = {

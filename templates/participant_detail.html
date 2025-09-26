@@ -3,267 +3,198 @@
 {% block title %}{{ participant.full_name }} - Участник{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="fas fa-user me-2"></i>{{ participant.full_name }}
-    </h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <a href="{{ url_for('participants') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i>Назад к списку
-            </a>
+<div class="pb-2 mb-6 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ participant.full_name }}</h1>
+            <p class="text-sm text-gray-500">Детальная информация об участнике</p>
         </div>
+        <a href="{{ url_for('main.participants') }}" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+            <i class="fa-solid fa-arrow-left mr-2"></i>Назад к списку
+        </a>
     </div>
 </div>
 
-<div class="row">
-    <!-- Participant Information -->
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-info-circle me-2"></i>Информация об участнике
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Полное имя:</strong></td>
-                                <td>{{ participant.full_name }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Telegram ID:</strong></td>
-                                <td>{{ participant.telegram_id }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Username:</strong></td>
-                                <td>
-                                    {% if participant.username %}
-                                        @{{ participant.username }}
-                                    {% else %}
-                                        <span class="text-muted">Не указан</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Телефон:</strong></td>
-                                <td>{{ participant.phone_number }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Карта лояльности:</strong></td>
-                                <td>{{ participant.loyalty_card }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Дата регистрации:</strong></td>
-                                <td>
-                                    {% if participant.registration_date %}
-                                        {{ participant.registration_date.strftime('%d.%m.%Y в %H:%M') }}
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Текущий статус:</strong></td>
-                                <td>
-                                    <span class="badge badge-{{ participant.status }} fs-6">
-                                        {% if participant.status == 'pending' %}
-                                            <i class="fas fa-clock me-1"></i>На рассмотрении
-                                        {% elif participant.status == 'approved' %}
-                                            <i class="fas fa-check-circle me-1"></i>Одобрена
-                                        {% elif participant.status == 'rejected' %}
-                                            <i class="fas fa-times-circle me-1"></i>Отклонена
-                                        {% endif %}
-                                    </span>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                {% if participant.admin_notes %}
-                <div class="mt-3">
-                    <h6><i class="fas fa-sticky-note me-2"></i>Заметки администратора:</h6>
-                    <div class="alert alert-secondary">
-                        {{ participant.admin_notes }}
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-8">
+        <!-- Participant Information -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <i class="fa-solid fa-user-circle mr-2 text-gray-500"></i>
+                    Основная информация
+                </h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Полное имя</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ participant.full_name }}</dd>
                     </div>
-                </div>
-                {% endif %}
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Телефон</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ participant.phone_number }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Telegram</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if participant.username %}@{{ participant.username }}{% else %}-{% endif %}
+                            <span class="text-xs text-gray-400"> (ID: {{ participant.telegram_id }})</span>
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Карта лояльности</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ participant.loyalty_card }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Дата регистрации</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ participant.registration_date.strftime('%d.%m.%Y %H:%M') if participant.registration_date else 'N/A' }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Текущий статус</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if participant.status == 'approved' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Одобрено</span>
+                            {% elif participant.status == 'pending' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">На рассмотрении</span>
+                            {% elif participant.status == 'rejected' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Отклонено</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    {% if participant.admin_notes %}
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Заметки администратора</dt>
+                        <dd class="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded-md">{{ participant.admin_notes }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
             </div>
         </div>
 
         <!-- Leaflet Photo -->
         {% if participant.leaflet_photo_path %}
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-image me-2"></i>Фото лифлета
-                </h5>
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <i class="fa-solid fa-image mr-2 text-gray-500"></i>
+                    Фото лифлета
+                </h3>
             </div>
-            <div class="card-body text-center">
-                <img src="{{ url_for('serve_photo', filename=participant.leaflet_photo_path) }}" 
-                     class="img-fluid rounded" 
-                     style="max-height: 400px;"
-                     alt="Фото лифлета">
-                <div class="mt-2">
-                    <a href="{{ url_for('serve_photo', filename=participant.leaflet_photo_path) }}" 
-                       class="btn btn-outline-primary" target="_blank">
-                        <i class="fas fa-external-link-alt me-1"></i>Открыть в полном размере
-                    </a>
-                </div>
+            <div class="px-4 py-5 sm:p-6 text-center">
+                <img src="{{ url_for('static', filename=participant.leaflet_photo_path) }}" alt="Фото лифлета" class="max-w-full h-auto max-h-96 mx-auto rounded-lg shadow-md">
+                <a href="{{ url_for('static', filename=participant.leaflet_photo_path) }}" target="_blank" class="mt-4 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fa-solid fa-external-link-alt mr-2"></i>Открыть в полном размере
+                </a>
             </div>
         </div>
         {% endif %}
     </div>
 
     <!-- Actions Panel -->
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-cogs me-2"></i>Действия
-                </h5>
+    <div class="lg:col-span-1 space-y-8">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <i class="fa-solid fa-cogs mr-2 text-gray-500"></i>
+                    Управление статусом
+                </h3>
             </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('update_participant_status', participant_id=participant.id) }}">
-                    <div class="mb-3">
-                        <label for="status" class="form-label">Изменить статус</label>
-                        <select class="form-select" id="status" name="status" required>
-                            <option value="pending" {% if participant.status == 'pending' %}selected{% endif %}>
-                                На рассмотрении
-                            </option>
-                            <option value="approved" {% if participant.status == 'approved' %}selected{% endif %}>
-                                Одобрить
-                            </option>
-                            <option value="rejected" {% if participant.status == 'rejected' %}selected{% endif %}>
-                                Отклонить
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">Заметки администратора</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="4" 
-                                  placeholder="Добавьте комментарий для участника...">{{ participant.admin_notes or '' }}</textarea>
-                        <div class="form-text">
-                            Эти заметки будут видны участнику при проверке статуса
+            <div class="px-4 py-5 sm:p-6">
+                <form method="POST" action="{{ url_for('main.update_participant_status', participant_id=participant.id) }}" x-data="{ status: '{{ participant.status }}' }">
+                    <div class="space-y-6">
+                        <div>
+                            <label for="status" class="block text-sm font-medium text-gray-700">Изменить статус</label>
+                            <select id="status" name="status" x-model="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md">
+                                <option value="pending">На рассмотрении</option>
+                                <option value="approved">Одобрить</option>
+                                <option value="rejected">Отклонить</option>
+                            </select>
                         </div>
-                    </div>
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>Сохранить изменения
-                        </button>
+                        <div>
+                            <label for="notes" class="block text-sm font-medium text-gray-700">Комментарий для участника</label>
+                            <textarea id="notes" name="notes" rows="4" class="mt-1 shadow-sm focus:ring-gray-500 focus:border-gray-500 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="Этот комментарий будет отправлен в Telegram...">{{ participant.admin_notes or '' }}</textarea>
+                        </div>
+
+                        <div x-show="status === 'rejected'" x-transition class="space-y-2">
+                            <p class="text-sm font-medium text-gray-700">Шаблоны причин отклонения:</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" @click="document.getElementById('notes').value = 'Нечеткое фото лифлета.'" class="text-xs text-left p-2 bg-gray-100 hover:bg-gray-200 rounded">📷 Нечеткое фото</button>
+                                <button type="button" @click="document.getElementById('notes').value = 'Некорректные данные.'" class="text-xs text-left p-2 bg-gray-100 hover:bg-gray-200 rounded">📝 Некорр. данные</button>
+                                <button type="button" @click="document.getElementById('notes').value = 'Карта не найдена.'" class="text-xs text-left p-2 bg-gray-100 hover:bg-gray-200 rounded">💳 Карта не найдена</button>
+                                <button type="button" @click="document.getElementById('notes').value = 'Нарушение правил.'" class="text-xs text-left p-2 bg-gray-100 hover:bg-gray-200 rounded">⚠️ Нарушение правил</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                <i class="fa-solid fa-save mr-2"></i>Сохранить изменения
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Additional Info -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>Дополнительная информация
-                </h5>
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <i class="fa-solid fa-bolt mr-2 text-gray-500"></i>
+                    Быстрые действия
+                </h3>
             </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <strong>ID в системе:</strong><br>
-                    <code>{{ participant.id }}</code>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Статус файла:</strong><br>
-                    {% if participant.leaflet_photo_path %}
-                        <span class="badge bg-success">
-                            <i class="fas fa-check me-1"></i>Загружен
-                        </span>
-                    {% else %}
-                        <span class="badge bg-warning">
-                            <i class="fas fa-exclamation me-1"></i>Не загружен
-                        </span>
-                    {% endif %}
-                </div>
-
-                <hr>
-
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-info btn-sm" onclick="copyToClipboard('{{ participant.telegram_id }}')">
-                        <i class="fas fa-copy me-1"></i>Копировать Telegram ID
+            <div class="px-4 py-5 sm:p-6">
+                <div class="space-y-3">
+                    <button onclick="copyToClipboard('{{ participant.telegram_id }}')" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fa-solid fa-copy mr-2"></i>Копировать Telegram ID
                     </button>
-                    <button class="btn btn-outline-info btn-sm" onclick="copyToClipboard('{{ participant.phone_number }}')">
-                        <i class="fas fa-copy me-1"></i>Копировать телефон
+                    <button onclick="copyToClipboard('{{ participant.phone_number }}')" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fa-solid fa-copy mr-2"></i>Копировать телефон
                     </button>
                 </div>
             </div>
         </div>
-
-        <!-- Quick Actions -->
-        {% if participant.status == 'pending' %}
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-bolt me-2"></i>Быстрые действия
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <form method="POST" action="{{ url_for('update_participant_status', participant_id=participant.id) }}" style="display: inline;">
-                        <input type="hidden" name="status" value="approved">
-                        <input type="hidden" name="notes" value="Заявка одобрена">
-                        <button type="submit" class="btn btn-success btn-sm w-100">
-                            <i class="fas fa-check me-1"></i>Быстро одобрить
-                        </button>
-                    </form>
-                    
-                    <form method="POST" action="{{ url_for('update_participant_status', participant_id=participant.id) }}" style="display: inline;">
-                        <input type="hidden" name="status" value="rejected">
-                        <input type="hidden" name="notes" value="Заявка отклонена. Обратитесь в техподдержку.">
-                        <button type="submit" class="btn btn-danger btn-sm w-100" 
-                                onclick="return confirm('Вы уверены, что хотите отклонить заявку?')">
-                            <i class="fas fa-times me-1"></i>Быстро отклонить
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        {% endif %}
     </div>
+
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(function() {
-        // Show success message
-        alert('Скопировано в буфер обмена: ' + text);
-    }).catch(function(err) {
-        console.error('Ошибка копирования: ', err);
-        alert('Ошибка копирования');
-    });
-}
-
-// Auto-save form data on change
-document.getElementById('notes').addEventListener('input', function() {
-    localStorage.setItem('admin_notes_' + '{{ participant.id }}', this.value);
-});
-
-// Restore saved notes on page load
-window.addEventListener('load', function() {
-    const savedNotes = localStorage.getItem('admin_notes_' + '{{ participant.id }}');
-    if (savedNotes) {
-        const notesField = document.getElementById('notes');
-        if (notesField.value === '') {
-            notesField.value = savedNotes;
-        }
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            // You can add a small notification toast here if you want
+            console.log('Copied:', text);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
     }
-});
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const status = document.getElementById('status').value;
+        const notes = document.getElementById('notes').value;
+        const participantName = '{{ participant.full_name }}';
+        
+        let confirmMessage = `Сохранить изменения для ${participantName}?`;
+
+        if (status === 'approved') {
+            confirmMessage = `Вы уверены, что хотите ОДОБРИТЬ заявку ${participantName}?\n\nУчастник получит уведомление в Telegram.`;
+        } else if (status === 'rejected') {
+            if (notes.trim() === '') {
+                if (!confirm('Вы уверены, что хотите отклонить заявку БЕЗ комментария? Рекомендуется указать причину.')) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+            confirmMessage = `Вы уверены, что хотите ОТКЛОНИТЬ заявку ${participantName}?\n\nУчастник получит уведомление с комментарием в Telegram.`;
+        }
+        
+        if (!confirm(confirmMessage)) {
+            e.preventDefault();
+        }
+    });
 </script>
 {% endblock %}

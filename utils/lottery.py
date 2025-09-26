@@ -7,7 +7,7 @@ import secrets
 import logging
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
-from database import DatabaseManager
+from database.db_manager import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +205,88 @@ class LotterySystem:
         }
         
         return stats
+    
+    def reroll_winner(self, winner_id: str, admin_id: int, reason: str = None) -> Dict:
+        """Reroll a specific winner - invalidate current winner and select new one"""
+        try:
+            # Get current winner info
+            winner = self.db_manager.get_winner_by_id(winner_id)
+            if not winner:
+                raise ValueError(f"Winner {winner_id} not found")
+            
+            # Invalidate current winner
+            success = self.db_manager.invalidate_winner(winner_id, admin_id, reason)
+            if not success:
+                raise ValueError("Failed to invalidate winner")
+            
+            # Get eligible participants (now includes the invalidated winner's participant)
+            eligible = self.get_eligible_participants()
+            
+            if len(eligible) == 0:
+                raise ValueError("No eligible participants for reroll")
+            
+            # Generate new seed for reroll
+            seed, seed_hash = self.generate_seed()
+            
+            # Select new winner
+            random_index = self.deterministic_random(seed, len(eligible), 0)
+            new_winner_participant = eligible[random_index]
+            
+            # Save new winner to database
+            new_winner_id = self.db_manager.add_winner(
+                participant_id=new_winner_participant['id'],
+                seed_hash=seed_hash,
+                draw_number=winner['draw_number']  # Keep same draw number
+            )
+            
+            # Log the reroll action
+            self.db_manager.log_admin_action(
+                admin_id=admin_id,
+                action='reroll_winner',
+                target_participant_id=new_winner_participant['id'],
+                details=f'Rerolled winner for draw #{winner["draw_number"]}. Old: {winner["full_name"]}, New: {new_winner_participant["full_name"]}. Reason: {reason or "No reason provided"}'
+            )
+            
+            result = {
+                'success': True,
+                'reroll_date': datetime.now().isoformat(),
+                'old_winner': winner,
+                'new_winner': {
+                    'winner_id': new_winner_id,
+                    'participant': new_winner_participant
+                },
+                'seed_hash': seed_hash,
+                'seed': seed,
+                'draw_number': winner['draw_number'],
+                'reason': reason
+            }
+            
+            logger.info(f"Winner rerolled successfully. Draw #{winner['draw_number']}: {winner['full_name']} -> {new_winner_participant['full_name']}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error during winner reroll: {e}")
+            raise e
+    
+    def delete_winner_completely(self, winner_id: str, admin_id: int) -> bool:
+        """Completely delete a winner and make participant eligible again"""
+        try:
+            # Get winner info before deletion
+            winner = self.db_manager.get_winner_by_id(winner_id)
+            if not winner:
+                raise ValueError(f"Winner {winner_id} not found")
+            
+            # Delete winner from database
+            success = self.db_manager.delete_winner(winner_id, admin_id)
+            if not success:
+                raise ValueError("Failed to delete winner from database")
+            
+            logger.info(f"Winner {winner_id} completely deleted. Participant {winner['full_name']} is now eligible again.")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error deleting winner completely: {e}")
+            return False
     
     def create_public_proof(self, result: Dict) -> Dict:
         """

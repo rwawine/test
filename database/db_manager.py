@@ -259,6 +259,74 @@ class DatabaseManager:
         columns = [desc[0] for desc in conn.description]
         return [dict(zip(columns, row)) for row in results]
     
+    def get_winner_by_id(self, winner_id: str) -> Optional[Dict]:
+        """Get winner by ID with participant info"""
+        conn = self.connect()
+        result = conn.execute("""
+            SELECT w.*, p.full_name, p.phone_number, p.telegram_id
+            FROM winners w
+            JOIN participants p ON w.participant_id = p.id
+            WHERE w.id = ?
+        """, [winner_id]).fetchone()
+        
+        if result:
+            columns = [desc[0] for desc in conn.description]
+            return dict(zip(columns, result))
+        return None
+    
+    def invalidate_winner(self, winner_id: str, admin_id: int, reason: str = None) -> bool:
+        """Invalidate a winner (for reroll)"""
+        try:
+            conn = self.connect()
+            
+            # Invalidate the winner
+            conn.execute("""
+                UPDATE winners SET is_valid = FALSE WHERE id = ?
+            """, [winner_id])
+            
+            # Log the action
+            self.log_admin_action(
+                admin_id=admin_id,
+                action='invalidate_winner',
+                target_participant_id=None,
+                details=f'Winner {winner_id} invalidated. Reason: {reason or "No reason provided"}'
+            )
+            
+            logger.info(f"Winner {winner_id} invalidated by admin {admin_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error invalidating winner {winner_id}: {e}")
+            return False
+    
+    def delete_winner(self, winner_id: str, admin_id: int) -> bool:
+        """Permanently delete a winner record"""
+        try:
+            conn = self.connect()
+            
+            # Get winner info before deletion for logging
+            winner = self.get_winner_by_id(winner_id)
+            if not winner:
+                return False
+            
+            # Delete the winner
+            conn.execute("DELETE FROM winners WHERE id = ?", [winner_id])
+            
+            # Log the action
+            self.log_admin_action(
+                admin_id=admin_id,
+                action='delete_winner',
+                target_participant_id=winner.get('participant_id'),
+                details=f'Winner record deleted: {winner.get("full_name")} from draw #{winner.get("draw_number")}'
+            )
+            
+            logger.info(f"Winner {winner_id} deleted by admin {admin_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error deleting winner {winner_id}: {e}")
+            return False
+    
     # Admin logging
     def log_admin_action(self, admin_id: int, action: str, 
                         target_participant_id: str = None, details: str = None) -> str:
@@ -347,3 +415,72 @@ class DatabaseManager:
         if self.connection:
             self.connection.close()
             self.connection = None
+    
+    def get_support_tickets(self, status: str = None) -> List[Dict]:
+        """Get support tickets, optionally filtered by status"""
+        conn = self.connect()
+        
+        if status:
+            results = conn.execute("""
+                SELECT st.*, p.full_name as participant_name
+                FROM support_tickets st
+                LEFT JOIN participants p ON st.participant_id = p.id
+                WHERE st.status = ?
+                ORDER BY st.created_at DESC
+            """, [status]).fetchall()
+        else:
+            results = conn.execute("""
+                SELECT st.*, p.full_name as participant_name
+                FROM support_tickets st
+                LEFT JOIN participants p ON st.participant_id = p.id
+                ORDER BY st.created_at DESC
+            """).fetchall()
+        
+        columns = [desc[0] for desc in conn.description]
+        return [dict(zip(columns, row)) for row in results]
+    
+    def get_support_ticket_by_id(self, ticket_id: str) -> Optional[Dict]:
+        """Get support ticket by ID"""
+        conn = self.connect()
+        result = conn.execute("""
+            SELECT st.*, p.full_name as participant_name, p.telegram_id
+            FROM support_tickets st
+            LEFT JOIN participants p ON st.participant_id = p.id
+            WHERE st.id = ?
+        """, [ticket_id]).fetchone()
+        
+        if result:
+            columns = [desc[0] for desc in conn.description]
+            return dict(zip(columns, result))
+        return None
+    
+    def get_support_messages(self, ticket_id: str) -> List[Dict]:
+        """Get all messages for a support ticket"""
+        conn = self.connect()
+        results = conn.execute("""
+            SELECT * FROM support_messages 
+            WHERE ticket_id = ? 
+            ORDER BY sent_at ASC
+        """, [ticket_id]).fetchall()
+        
+        columns = [desc[0] for desc in conn.description]
+        return [dict(zip(columns, row)) for row in results]
+    
+    def update_support_ticket_status(self, ticket_id: str, status: str) -> bool:
+        """Update support ticket status"""
+        conn = self.connect()
+        
+        if status == 'closed':
+            conn.execute("""
+                UPDATE support_tickets 
+                SET status = ?, updated_at = CURRENT_TIMESTAMP, closed_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, [status, ticket_id])
+        else:
+            conn.execute("""
+                UPDATE support_tickets 
+                SET status = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, [status, ticket_id])
+        
+        return True

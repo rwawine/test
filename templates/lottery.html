@@ -1,107 +1,146 @@
 {% extends "base.html" %}
 
-{% block title %}Lottery Management - Admin Panel{% endblock %}
+{% block title %}Управление розыгрышем{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><i class="fas fa-dice me-2"></i>Lottery Management</h1>
-</div>
-
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title">Total Draws</h5>
-                <h2 class="text-primary">{{ stats.total_draws }}</h2>
-            </div>
+<div class="pb-2 mb-6 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Управление розыгрышем</h1>
+            <p class="text-sm text-gray-500">Проведение розыгрыша и просмотр результатов</p>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title">Total Winners</h5>
-                <h2 class="text-success">{{ stats.total_winners }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title">Eligible Participants</h5>
-                <h2 class="text-info">{{ eligible_count }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title">Win Rate</h5>
-                <h2 class="text-warning">{{ "%.1f"|format(stats.win_rate) }}%</h2>
-            </div>
-        </div>
+        <a href="{{ url_for('main.participants', status='approved') }}" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+            <i class="fa-solid fa-users mr-2"></i>Участники
+        </a>
     </div>
 </div>
 
-<!-- Conduct Lottery -->
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-play me-2"></i>Conduct New Lottery
-                </h5>
+<!-- Stats -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="flex items-center">
+            <div class="p-3 bg-gray-100 rounded-full">
+                <i class="fa-solid fa-dice fa-lg text-gray-500"></i>
             </div>
-            <div class="card-body">
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Всего розыгрышей</p>
+                <p class="text-2xl font-bold text-gray-900">{{ lottery_stats.total_draws or 0 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="flex items-center">
+            <div class="p-3 bg-gray-100 rounded-full">
+                <i class="fa-solid fa-trophy fa-lg text-gray-500"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Всего победителей</p>
+                <p class="text-2xl font-bold text-gray-900">{{ lottery_stats.total_winners or 0 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="flex items-center">
+            <div class="p-3 bg-gray-100 rounded-full">
+                <i class="fa-solid fa-user-check fa-lg text-gray-500"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Подходящих участников</p>
+                <p class="text-2xl font-bold text-gray-900">{{ eligible_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="flex items-center">
+            <div class="p-3 bg-gray-100 rounded-full">
+                <i class="fa-solid fa-percent fa-lg text-gray-500"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Процент выигрыша</p>
+                <p class="text-2xl font-bold text-gray-900">{{ "%.1f"|format(lottery_stats.win_rate or 0) }}%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Conduct Lottery -->
+    <div class="lg:col-span-2">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <i class="fa-solid fa-play mr-2 text-gray-500"></i>
+                    Провести новый розыгрыш
+                </h3>
+                <span class="px-3 py-1 text-sm font-semibold text-gray-800 bg-gray-100 rounded-full">{{ eligible_count }} участников готово</span>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
                 {% if eligible_count > 0 %}
-                <form method="POST" action="{{ url_for('conduct_lottery') }}" onsubmit="return confirm('Are you sure you want to conduct the lottery?')">
-                    <div class="mb-3">
-                        <label for="num_winners" class="form-label">Number of Winners</label>
-                        <input type="number" class="form-control" id="num_winners" name="num_winners" 
-                               value="1" min="1" max="{{ eligible_count }}" required>
-                        <div class="form-text">Maximum: {{ eligible_count }} eligible participants</div>
+                <form method="POST" action="{{ url_for('main.conduct_lottery') }}" onsubmit="return confirm('Вы уверены, что хотите провести розыгрыш?')" id="lotteryForm" x-data="{ num_winners: 1, eligible_count: {{ eligible_count }} }">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="num_winners" class="block text-sm font-medium text-gray-700 mb-1">Количество победителей</label>
+                            <input type="number" id="num_winners" name="num_winners" x-model.number="num_winners" min="1" :max="eligible_count" required class="block w-full text-lg px-4 py-3 border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500">
+                            <p class="text-xs text-gray-500 mt-1">Максимум: {{ eligible_count }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Шанс выигрыша</label>
+                            <div class="w-full text-lg px-4 py-3 bg-gray-50 border border-gray-200 rounded-md">
+                                <span class="font-bold text-gray-800" x-text="((num_winners / eligible_count) * 100).toFixed(2) + '%'"></span>
+                                <span class="text-sm text-gray-500 ml-2" x-text="'(' + (eligible_count - num_winners) + ' проиграют)'"></span>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Fairness Guarantee:</strong> The lottery uses cryptographically secure random number generation 
-                        with public hash verification.
+                    <div class="p-4 mb-6 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg">
+                        <i class="fa-solid fa-shield-alt mr-2"></i>
+                        <strong>Гарантия честности:</strong> Розыгрыш использует криптографически стойкую генерацию случайных чисел с публичной проверкой хеша.
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fas fa-dice me-2"></i>Conduct Lottery
-                    </button>
+                    <div class="flex items-center space-x-4">
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            <i class="fa-solid fa-dice mr-2"></i>Провести розыгрыш
+                        </button>
+                        <button type="button" onclick="location.reload()" class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            <i class="fa-solid fa-sync-alt mr-2"></i>Обновить
+                        </button>
+                    </div>
                 </form>
                 {% else %}
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    No eligible participants for lottery. Need approved participants who haven't won yet.
+                <div class="text-center py-8">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                        <i class="fa-solid fa-exclamation-triangle text-yellow-600"></i>
+                    </div>
+                    <h3 class="mt-4 text-lg font-medium text-gray-900">Нет подходящих участников</h3>
+                    <p class="mt-2 text-sm text-gray-500">Для розыгрыша необходимы одобренные участники, которые еще не выиграли.</p>
+                    <div class="mt-6">
+                        <a href="{{ url_for('main.participants', status='pending') }}" class="px-4 py-2 text-sm font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-900">
+                            Проверить заявки ({{ stats.by_status.get('pending', 0) }})
+                        </a>
+                    </div>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-shield-alt me-2"></i>Fairness Verification
-                </h5>
+    <!-- Fairness Check -->
+    <div class="lg:col-span-1">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <i class="fa-solid fa-shield-alt mr-2 text-gray-500"></i>
+                    Проверка честности
+                </h3>
             </div>
-            <div class="card-body">
-                <p>Our lottery system ensures complete fairness through:</p>
-                <ul>
-                    <li><strong>Cryptographic Security:</strong> SHA-256 based random seed generation</li>
-                    <li><strong>Public Verification:</strong> Published hash allows result verification</li>
-                    <li><strong>Deterministic Results:</strong> Same seed always produces same results</li>
-                    <li><strong>Transparency:</strong> Complete audit trail of all draws</li>
+            <div class="px-4 py-5 sm:p-6">
+                <ul class="space-y-3 text-sm text-gray-600">
+                    <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i><span><strong>Крипто-безопасность:</strong> Генерация семени на основе SHA-256.</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i><span><strong>Публичная проверка:</strong> Хеш позволяет проверить результаты.</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i><span><strong>Прозрачность:</strong> Полный аудиторский след всех розыгрышей.</span></li>
                 </ul>
-                
-                <div class="mt-3">
-                    <a href="#" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#verificationModal">
-                        <i class="fas fa-question-circle me-1"></i>How to Verify
-                    </a>
+                <div class="mt-6">
+                    <button @click="$dispatch('open-modal', 'verification-modal')" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fa-solid fa-question-circle mr-2"></i>Как проверить
+                    </button>
                 </div>
             </div>
         </div>
@@ -109,83 +148,153 @@
 </div>
 
 <!-- Recent Winners -->
-{% if winners %}
-<div class="card mt-4">
-    <div class="card-header">
-        <h5 class="mb-0">
-            <i class="fas fa-trophy me-2"></i>Recent Winners
-        </h5>
+<div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+            <i class="fa-solid fa-trophy mr-2 text-gray-500"></i>
+            Последние победители
+        </h3>
     </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
+    <div class="px-4 py-5 sm:p-6">
+        {% if winners %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <th>Winner</th>
-                        <th>Phone</th>
-                        <th>Draw Date</th>
-                        <th>Draw #</th>
-                        <th>Seed Hash</th>
-                        <th>Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Победитель</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Телефон</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">№ Розыгрыша</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Хеш семени</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for winner in winners[-10:] %}
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for winner in winners[-10:]|reverse %}
                     <tr>
-                        <td>{{ winner.full_name }}</td>
-                        <td>{{ winner.phone_number }}</td>
-                        <td>{{ winner.draw_date.strftime('%d.%m.%Y %H:%M') if winner.draw_date else 'N/A' }}</td>
-                        <td>{{ winner.draw_number }}</td>
-                        <td>
-                            <code>{{ winner.seed_hash[:16] }}...</code>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ winner.full_name }}</div>
+                            <div class="text-sm text-gray-500">@{{ winner.username or '-' }}</div>
                         </td>
-                        <td>
-                            {% if winner.is_valid %}
-                                <span class="badge bg-success">Valid</span>
-                            {% else %}
-                                <span class="badge bg-danger">Invalid</span>
-                            {% endif %}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ winner.phone_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ winner.draw_date.strftime('%d.%m.%Y %H:%M') if winner.draw_date else 'N/A' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{ winner.draw_number }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{{ winner.seed_hash[:16] }}...</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ url_for('main.participant_detail', participant_id=winner.participant_id) }}" class="text-gray-600 hover:text-gray-900" title="Подробности">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <button @click="$dispatch('open-modal', 'reroll-modal-{{ winner.id }}')" class="text-gray-600 hover:text-gray-900" title="Перерозыгрыш">
+                                    <i class="fa-solid fa-redo"></i>
+                                </button>
+                                <button @click="$dispatch('open-modal', 'delete-winner-modal-{{ winner.id }}')" class="text-red-600 hover:text-red-900" title="Удалить">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="text-center py-8">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
+                <i class="fa-solid fa-trophy text-gray-400"></i>
+            </div>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">Пока нет победителей</h3>
+            <p class="mt-2 text-sm text-gray-500">Проведите первый розыгрыш, чтобы определить победителей.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endif %}
 
-<!-- Verification Modal -->
-<div class="modal fade" id="verificationModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Lottery Verification Guide</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <h6>Steps to Verify Lottery Results:</h6>
-                <ol>
-                    <li><strong>Get the Seed:</strong> The secret seed is revealed after the lottery</li>
-                    <li><strong>Verify Hash:</strong> Check that SHA-256(seed) equals the published hash</li>
-                    <li><strong>Reproduce Results:</strong> Use the same algorithm with the seed</li>
-                    <li><strong>Compare Winners:</strong> Your calculated winners should match the published results</li>
-                </ol>
-                
-                <h6 class="mt-3">Algorithm Overview:</h6>
-                <pre><code>1. Generate cryptographically secure seed
-2. Create SHA-256 hash of seed (published immediately)
-3. For each winner position:
-   - Combine seed with position index
-   - Calculate SHA-256 hash
-   - Convert to number and mod by remaining participants
-   - Select participant at that index
-   - Remove selected participant from pool</code></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+<!-- Modals -->
+<div x-data="{ open: false, modal: '' }" @open-modal.window="open = true; modal = $event.detail">
+    <!-- Verification Modal -->
+    <div x-show="open && modal === 'verification-modal'" x-cloak class="fixed z-10 inset-0 overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="open" @click.away="open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div x-show="open" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900"><i class="fa-solid fa-shield-alt mr-2"></i>Проверка честности</h3>
+                    <div class="mt-4 space-y-4 text-sm text-gray-600">
+                        <p><strong>Шаги для проверки:</strong></p>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li><strong>Получите семя:</strong> Секретное семя раскрывается после розыгрыша.</li>
+                            <li><strong>Проверьте хеш:</strong> Убедитесь, что SHA-256(семя) равно опубликованному хешу.</li>
+                            <li><strong>Воспроизведите результаты:</strong> Используйте тот же алгоритм с семенем.</li>
+                            <li><strong>Сравните победителей:</strong> Ваши рассчитанные победители должны совпадать с опубликованными.</li>
+                        </ol>
+                        <p><strong>Алгоритм:</strong></p>
+                        <pre class="bg-gray-100 p-2 rounded-md text-xs">1. Генерация крипто-семени
+2. SHA-256(семя) -> хеш (публикуется)
+3. Для каждого победителя:
+   SHA-256(семя + индекс) -> выбор</pre>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button @click="open = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Закрыть</button>
+                </div>
             </div>
         </div>
     </div>
+
+    {% for winner in winners %}
+    <!-- Reroll Modal -->
+    <div x-show="open && modal === 'reroll-modal-{{ winner.id }}'" x-cloak class="fixed z-10 inset-0 overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="open" @click.away="open = false" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div x-show="open" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form method="POST" action="{{ url_for('main.reroll_winner', winner_id=winner.id) }}">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Перерозыгрыш победителя</h3>
+                        <p class="mt-2 text-sm text-gray-500">Вы уверены, что хотите провести перерозыгрыш для <strong>{{ winner.full_name }}</strong> (Розыгрыш №{{ winner.draw_number }})?</p>
+                        <div class="mt-4">
+                            <label for="reroll_reason_{{ winner.id }}" class="block text-sm font-medium text-gray-700">Причина</label>
+                            <input type="text" name="reason" id="reroll_reason_{{ winner.id }}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 sm:ml-3 sm:w-auto sm:text-sm">Перерозыгрыш</button>
+                        <button @click="open = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Winner Modal -->
+    <div x-show="open && modal === 'delete-winner-modal-{{ winner.id }}'" x-cloak class="fixed z-10 inset-0 overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="open" @click.away="open = false" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div x-show="open" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form method="POST" action="{{ url_for('main.delete_winner', winner_id=winner.id) }}">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <i class="fa-solid fa-exclamation-triangle text-red-600"></i>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Удалить победителя</h3>
+                                <p class="mt-2 text-sm text-gray-500">Вы уверены, что хотите удалить победителя <strong>{{ winner.full_name }}</strong>? Это действие необратимо.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">Удалить</button>
+                        <button @click="open = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

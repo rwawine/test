@@ -1,75 +1,111 @@
 {% extends "base.html" %}
 
-{% block title %}Broadcast Management - Admin Panel{% endblock %}
+{% block title %}Управление рассылками - Админ-панель{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><i class="fas fa-bullhorn me-2"></i>Broadcast Management</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBroadcastModal">
-            <i class="fas fa-plus me-1"></i>Create Broadcast
+<div class="bg-gray-800 text-white p-4 rounded-lg shadow-md mb-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold flex items-center">
+            <i class="fas fa-bullhorn mr-3"></i>
+            Управление рассылками
+        </h1>
+        <button @click="isCreateModalOpen = true; resetForm();" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            <i class="fas fa-plus mr-2"></i>Создать рассылку
         </button>
     </div>
 </div>
 
-<!-- Broadcast List -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">
-            <i class="fas fa-list me-2"></i>Recent Broadcasts
-        </h5>
+<!-- Quick Stats -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="bg-gray-700 p-5 rounded-lg shadow-lg">
+        <div class="text-sm font-bold text-blue-400 uppercase mb-1">Всего рассылок</div>
+        <div class="text-3xl font-extrabold text-white">{{ broadcasts|length }}</div>
     </div>
-    <div class="card-body">
+    <div class="bg-gray-700 p-5 rounded-lg shadow-lg">
+        <div class="text-sm font-bold text-green-400 uppercase mb-1">Отправлено</div>
+        <div class="text-3xl font-extrabold text-white">{{ broadcasts|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+    </div>
+    <div class="bg-gray-700 p-5 rounded-lg shadow-lg">
+        <div class="text-sm font-bold text-yellow-400 uppercase mb-1">Черновики</div>
+        <div class="text-3xl font-extrabold text-white">{{ broadcasts|selectattr('status', 'equalto', 'draft')|list|length }}</div>
+    </div>
+    <div class="bg-gray-700 p-5 rounded-lg shadow-lg">
+        <div class="text-sm font-bold text-indigo-400 uppercase mb-1">Отправляется</div>
+        <div class="text-3xl font-extrabold text-white">{{ broadcasts|selectattr('status', 'equalto', 'sending')|list|length }}</div>
+    </div>
+</div>
+
+<!-- Broadcast List -->
+<div class="bg-gray-800 rounded-lg shadow-lg">
+    <div class="p-5 border-b border-gray-700">
+        <h2 class="text-xl font-bold text-white flex items-center">
+            <i class="fas fa-list mr-3"></i>Список рассылок
+        </h2>
+    </div>
+    <div class="p-5">
         {% if broadcasts %}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-gray-800 text-white">
+                <thead class="bg-gray-900">
                     <tr>
-                        <th>Title</th>
-                        <th>Target</th>
-                        <th>Recipients</th>
-                        <th>Sent</th>
-                        <th>Failed</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th class="py-3 px-4 text-left">Название</th>
+                        <th class="py-3 px-4 text-left">Аудитория</th>
+                        <th class="py-3 px-4 text-center">Получателей</th>
+                        <th class="py-3 px-4 text-center">Прогресс</th>
+                        <th class="py-3 px-4 text-left">Статус</th>
+                        <th class="py-3 px-4 text-left">Дата создания</th>
+                        <th class="py-3 px-4 text-center">Действия</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-700">
                     {% for broadcast in broadcasts %}
-                    <tr>
-                        <td>{{ broadcast.title }}</td>
-                        <td>
-                            <span class="badge bg-info">{{ broadcast.target_audience }}</span>
+                    <tr class="hover:bg-gray-700 transition-colors">
+                        <td class="py-4 px-4">
+                            <strong class="font-semibold">{{ broadcast.title }}</strong>
+                            <p class="text-sm text-gray-400 mt-1">{{ broadcast.message_text[:50] }}{% if broadcast.message_text|length > 50 %}...{% endif %}</p>
                         </td>
-                        <td>{{ broadcast.total_recipients }}</td>
-                        <td>
-                            <span class="text-success">{{ broadcast.sent_count }}</span>
+                        <td class="py-4 px-4">
+                            {% set audience_class = {
+                                'all': 'bg-blue-500', 'approved': 'bg-green-500', 'pending': 'bg-yellow-500',
+                                'rejected': 'bg-red-500', 'winners': 'bg-indigo-500'
+                            }[broadcast.target_audience] %}
+                            <span class="px-2 py-1 text-xs font-bold rounded-full {{ audience_class }}">{{ broadcast.target_audience }}</span>
                         </td>
-                        <td>
-                            <span class="text-danger">{{ broadcast.failed_count }}</span>
+                        <td class="py-4 px-4 text-center font-mono">{{ broadcast.total_recipients or 0 }}</td>
+                        <td class="py-4 px-4">
+                            <div class="flex items-center">
+                                <div class="w-24 bg-gray-600 rounded-full h-2.5 mr-3">
+                                    {% set progress = ((broadcast.sent_count or 0) / (broadcast.total_recipients or 1) * 100)|round %}
+                                    <div class="bg-green-500 h-2.5 rounded-full" :style="`width: {{ progress }}%`"></div>
+                                </div>
+                                <span class="text-sm font-medium">{{ progress }}%</span>
+                            </div>
+                            <div class="text-xs text-gray-400 mt-1">
+                                <span class="text-green-400">{{ broadcast.sent_count or 0 }} sent</span> / <span class="text-red-400">{{ broadcast.failed_count or 0 }} failed</span>
+                            </div>
                         </td>
-                        <td>
-                            {% if broadcast.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
-                            {% elif broadcast.status == 'sending' %}
-                                <span class="badge bg-warning">Sending</span>
-                            {% elif broadcast.status == 'draft' %}
-                                <span class="badge bg-secondary">Draft</span>
-                            {% else %}
-                                <span class="badge bg-danger">{{ broadcast.status }}</span>
-                            {% endif %}
+                        <td class="py-4 px-4">
+                            {% set status_config = {
+                                'completed': ('bg-green-500/20 text-green-300', 'fas fa-check-circle'),
+                                'sending': ('bg-yellow-500/20 text-yellow-300', 'fas fa-paper-plane'),
+                                'draft': ('bg-gray-500/20 text-gray-300', 'fas fa-pencil-alt'),
+                                'failed': ('bg-red-500/20 text-red-300', 'fas fa-exclamation-circle')
+                            }.get(broadcast.status, ('bg-gray-500/20 text-gray-300', 'fas fa-question-circle')) %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ status_config[0] }}">
+                                <i class="{{ status_config[1] }} mr-1.5"></i>
+                                {{ broadcast.status }}
+                            </span>
                         </td>
-                        <td>{{ broadcast.created_at.strftime('%d.%m.%Y %H:%M') if broadcast.created_at else 'N/A' }}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="viewBroadcast('{{ broadcast.id }}')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <td class="py-4 px-4 text-sm">{{ broadcast.created_at.strftime('%d.%m.%Y %H:%M') if broadcast.created_at else 'N/A' }}</td>
+                        <td class="py-4 px-4 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button @click="viewBroadcast('{{ broadcast.id }}')" class="text-gray-400 hover:text-blue-400 transition" title="Посмотреть"><i class="fas fa-eye"></i></button>
                                 {% if broadcast.status == 'draft' %}
-                                <button class="btn btn-outline-success" onclick="sendBroadcast('{{ broadcast.id }}')">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
+                                <button @click="isCreateModalOpen = true; editBroadcast('{{ broadcast.id }}')" class="text-gray-400 hover:text-yellow-400 transition" title="Редактировать"><i class="fas fa-edit"></i></button>
+                                <button @click="sendBroadcast('{{ broadcast.id }}', $event)" class="text-gray-400 hover:text-green-400 transition" title="Отправить"><i class="fas fa-paper-plane"></i></button>
+                                {% endif %}
+                                {% if broadcast.status in ['completed', 'draft'] %}
+                                <button @click="deleteBroadcast('{{ broadcast.id }}')" class="text-gray-400 hover:text-red-400 transition" title="Удалить"><i class="fas fa-trash"></i></button>
                                 {% endif %}
                             </div>
                         </td>
@@ -79,66 +115,94 @@
             </table>
         </div>
         {% else %}
-        <div class="text-center py-4">
-            <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
-            <h5 class="text-muted">No broadcasts yet</h5>
-            <p class="text-muted">Create your first broadcast to communicate with participants</p>
+        <div class="text-center py-12">
+            <i class="fas fa-bullhorn fa-4x text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-semibold text-white">Пока нет рассылок</h3>
+            <p class="text-gray-400 mt-2">Создайте первую рассылку для общения с участниками.</p>
+            <button @click="isCreateModalOpen = true; resetForm();" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                <i class="fas fa-plus mr-2"></i>Создать рассылку
+            </button>
         </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Create Broadcast Modal -->
-<div class="modal fade" id="createBroadcastModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Create New Broadcast</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Create/Edit Broadcast Modal -->
+<div x-show="isCreateModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @keydown.escape.window="isCreateModalOpen = false">
+    <div class="bg-gray-800 text-white rounded-lg shadow-xl p-6 w-full max-w-2xl" @click.away="isCreateModalOpen = false">
+        <h2 class="text-2xl font-bold mb-4" x-text="isEditMode ? 'Редактировать рассылку' : 'Создать новую рассылку'"></h2>
+        <form :action="isEditMode ? '/broadcasts/' + broadcastId + '/edit' : '{{ url_for('create_broadcast') }}'" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label for="title" class="block text-sm font-medium text-gray-300">Название</label>
+                    <input type="text" name="title" x-model="form.title" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 mt-1 focus:ring-blue-500 focus:border-blue-500" placeholder="Например: Объявление результатов" required>
+                </div>
+                <div>
+                    <label for="target_audience" class="block text-sm font-medium text-gray-300">Целевая аудитория</label>
+                    <select name="target_audience" x-model="form.target_audience" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 mt-1 focus:ring-blue-500 focus:border-blue-500" required>
+                        <option value="all">Все участники</option>
+                        <option value="approved">Только одобренные</option>
+                        <option value="pending">На рассмотрении</option>
+                        <option value="rejected">Отклоненные</option>
+                        <option value="winners">Только победители</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="message_text" class="block text-sm font-medium text-gray-300">Сообщение</label>
+                    <textarea name="message_text" x-model="form.message_text" rows="6" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 mt-1 focus:ring-blue-500 focus:border-blue-500" placeholder="Напишите сообщение для участников..." required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Шаблоны сообщений</label>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <button type="button" @click="useTemplate('🎉 Поздравляем! Результаты розыгрыша опубликованы!')" class="bg-gray-700 hover:bg-gray-600 text-left text-sm py-2 px-3 rounded-md">🎉 Объявление победителей</button>
+                        <button type="button" @click="useTemplate('📝 Новые правила участия в розыгрыше. Ознакомьтесь!')" class="bg-gray-700 hover:bg-gray-600 text-left text-sm py-2 px-3 rounded-md">📝 Обновление правил</button>
+                        <button type="button" @click="useTemplate('✨ Новый розыгрыш начинается! Принимаем заявки.')" class="bg-gray-700 hover:bg-gray-600 text-left text-sm py-2 px-3 rounded-md">✨ Новый розыгрыш</button>
+                        <button type="button" @click="useTemplate('📞 Если у вас есть вопросы, обращайтесь в техподдержку.')" class="bg-gray-700 hover:bg-gray-600 text-left text-sm py-2 px-3 rounded-md">📞 Техподдержка</button>
+                    </div>
+                </div>
             </div>
-            <form method="POST" action="{{ url_for('create_broadcast') }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="target_audience" class="form-label">Target Audience</label>
-                        <select class="form-select" id="target_audience" name="target_audience" required>
-                            <option value="all">All Participants</option>
-                            <option value="approved">Approved Only</option>
-                            <option value="pending">Pending Review</option>
-                            <option value="rejected">Rejected Applications</option>
-                            <option value="winners">Winners Only</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="message_text" class="form-label">Message</label>
-                        <textarea class="form-control" id="message_text" name="message_text" rows="6" required></textarea>
-                        <div class="form-text">Use emojis and simple formatting for better engagement</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Message Templates</label>
-                        <div class="row">
-                            {% for template_name, template_text in templates.items() %}
-                            <div class="col-md-6 mb-2">
-                                <button type="button" class="btn btn-outline-secondary btn-sm w-100" 
-                                        onclick="useTemplate('{{ template_text|e }}')">
-                                    {{ template_name.replace('_', ' ').title() }}
-                                </button>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+            <div class="flex justify-end mt-6 space-x-3">
+                <button type="button" @click="isCreateModalOpen = false" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Отмена</button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" x-text="isEditMode ? 'Сохранить изменения' : 'Создать рассылку'"></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View Broadcast Modal -->
+<div x-show="isViewModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @keydown.escape.window="isViewModalOpen = false">
+    <div class="bg-gray-800 text-white rounded-lg shadow-xl p-6 w-full max-w-2xl" @click.away="isViewModalOpen = false">
+        <h2 class="text-2xl font-bold mb-4">Подробности рассылки</h2>
+        <div class="space-y-4" x-if="viewData">
+            <div>
+                <h6 class="font-semibold text-gray-400">Название:</h6>
+                <p x-text="viewData.title"></p>
+            </div>
+            <div>
+                <h6 class="font-semibold text-gray-400">Целевая аудитория:</h6>
+                <p x-text="viewData.target_audience"></p>
+            </div>
+            <div>
+                <h6 class="font-semibold text-gray-400">Сообщение:</h6>
+                <div class="bg-gray-700 p-3 rounded-md" x-text="viewData.message_text"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 pt-3">
+                <div>
+                    <h6 class="font-semibold text-gray-400">Получателей:</h6>
+                    <p class="text-2xl font-bold" x-text="viewData.total_recipients || 0"></p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Broadcast</button>
+                <div>
+                    <h6 class="font-semibold text-gray-400">Отправлено:</h6>
+                    <p class="text-2xl font-bold text-green-400" x-text="viewData.sent_count || 0"></p>
                 </div>
-            </form>
+                <div>
+                    <h6 class="font-semibold text-gray-400">Ошибок:</h6>
+                    <p class="text-2xl font-bold text-red-400" x-text="viewData.failed_count || 0"></p>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end mt-6">
+            <button type="button" @click="isViewModalOpen = false" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Закрыть</button>
         </div>
     </div>
 </div>
@@ -146,25 +210,96 @@
 
 {% block scripts %}
 <script>
-function useTemplate(template) {
-    document.getElementById('message_text').value = template;
-}
+document.addEventListener('alpine:init', () => {
+    Alpine.data('broadcasts', () => ({
+        isCreateModalOpen: false,
+        isViewModalOpen: false,
+        isEditMode: false,
+        broadcastId: null,
+        form: {
+            title: '',
+            target_audience: 'all',
+            message_text: ''
+        },
+        viewData: null,
 
-function viewBroadcast(broadcastId) {
-    // TODO: Implement broadcast details view
-    alert('Broadcast details: ' + broadcastId);
-}
+        resetForm() {
+            this.isEditMode = false;
+            this.broadcastId = null;
+            this.form = { title: '', target_audience: 'all', message_text: '' };
+        },
 
-function sendBroadcast(broadcastId) {
-    if (confirm('Are you sure you want to send this broadcast?')) {
-        // TODO: Implement broadcast sending
-        alert('Sending broadcast: ' + broadcastId);
-    }
-}
+        useTemplate(template) {
+            this.form.message_text = template;
+        },
 
-// Auto-update recipient count based on target audience
-document.getElementById('target_audience').addEventListener('change', function() {
-    // TODO: Fetch and display recipient count for selected audience
+        viewBroadcast(id) {
+            fetch(`/api/broadcast/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Ошибка: ' + data.error);
+                        return;
+                    }
+                    this.viewData = data;
+                    this.isViewModalOpen = true;
+                })
+                .catch(err => console.error('Error fetching broadcast details:', err));
+        },
+
+        editBroadcast(id) {
+            fetch(`/api/broadcast/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Ошибка: ' + data.error);
+                        return;
+                    }
+                    this.isEditMode = true;
+                    this.broadcastId = id;
+                    this.form.title = data.title;
+                    this.form.target_audience = data.target_audience;
+                    this.form.message_text = data.message_text;
+                    this.isCreateModalOpen = true;
+                })
+                .catch(err => console.error('Error fetching broadcast for edit:', err));
+        },
+
+        sendBroadcast(id, event) {
+            if (!confirm('Вы уверены, что хотите отправить эту рассылку?\nЭто действие нельзя отменить.')) {
+                return;
+            }
+            const button = event.currentTarget;
+            const originalIcon = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/broadcasts/${id}/send`;
+            document.body.appendChild(form);
+            form.submit();
+        },
+
+        deleteBroadcast(id) {
+            if (!confirm('Вы уверены, что хотите удалить эту рассылку?\nЭто действие нельзя отменить.')) {
+                return;
+            }
+            fetch(`/broadcasts/${id}/delete`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Ошибка при удалении: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(err => console.error('Error deleting broadcast:', err));
+        }
+    }));
 });
 </script>
 {% endblock %}

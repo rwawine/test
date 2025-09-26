@@ -1,0 +1,25 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "- [x] Создать `main.py` - точка входа в приложение\r - [x] Создать `requirements.txt` с зависимостями\r - [x] Создать `config.py` для конфигурации\r - [x] Создать `.env` файл для токенов и секретов\r - [x] Создать `.gitignore` для Python проекта\r - [x] Создать `README.md` с инструкциями",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rwawine/test.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rwawine/test/issues"
+  },
+  "homepage": "https://github.com/rwawine/test#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13"
+  }
+}
